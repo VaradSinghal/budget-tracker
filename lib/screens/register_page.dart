@@ -13,7 +13,8 @@ class RegisterPage extends StatefulWidget {
   _RegisterPageState createState() => _RegisterPageState();
 }
 
-class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMixin {
+class _RegisterPageState extends State<RegisterPage>
+    with TickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   String _email = '';
   String _password = '';
@@ -58,12 +59,12 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
       duration: const Duration(seconds: 10),
     )..repeat(reverse: true);
     _gradientColor1 = ColorTween(
-      begin: const Color(0xFF1C2526), 
-      end: const Color(0xFF4B5EAA), 
+      begin: const Color(0xFF1C2526),
+      end: const Color(0xFF4B5EAA),
     ).animate(_gradientController);
     _gradientColor2 = ColorTween(
-      begin: const Color(0xFF4B5EAA), 
-      end: const Color(0xFF1C2526), 
+      begin: const Color(0xFF4B5EAA),
+      end: const Color(0xFF1C2526),
     ).animate(_gradientController);
   }
 
@@ -82,7 +83,7 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
         await _authService.register(_email, _password);
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) =>  HomePage()),
+          MaterialPageRoute(builder: (context) => const HomePage()),
         );
       } catch (e) {
         setState(() {
@@ -122,28 +123,28 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
                           animation: _logoController,
                           builder: (context, child) {
                             return Transform(
-                              transform: Matrix4.identity()
-                                ..scale(_logoScaleAnimation.value)
-                                ..rotateZ(_logoRotateAnimation.value),
+                              transform:
+                                  Matrix4.identity()
+                                    ..scale(_logoScaleAnimation.value)
+                                    ..rotateZ(_logoRotateAnimation.value),
                               alignment: Alignment.center,
                               child: Column(
                                 children: [
                                   const Icon(
                                     Icons.account_balance_wallet,
                                     size: 60,
-                                    color: Color(0xFFE5E7EB), 
+                                    color: Color(0xFFE5E7EB),
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
                                     'Budget Tracker',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .headlineSmall
-                                        ?.copyWith(
-                                          color: const Color(0xFFE5E7EB),
-                                          fontWeight: FontWeight.bold,
-                                          fontFamily: 'Poppins',
-                                        ),
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.headlineSmall?.copyWith(
+                                      color: const Color(0xFFE5E7EB),
+                                      fontWeight: FontWeight.bold,
+                                      fontFamily: 'Poppins',
+                                    ),
                                   ),
                                 ],
                               ),
@@ -153,18 +154,22 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
                         const SizedBox(height: 16),
                         Text(
                           'Create your account',
-                          style:
-                              Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                    color: const Color(0xFFE5E7EB).withOpacity(0.7),
-                                    fontFamily: 'Roboto',
-                                    fontWeight: FontWeight.w400,
-                                  ),
+                          style: Theme.of(
+                            context,
+                          ).textTheme.bodyLarge?.copyWith(
+                            color: const Color(0xFFE5E7EB).withOpacity(0.7),
+                            fontFamily: 'Roboto',
+                            fontWeight: FontWeight.w400,
+                          ),
                         ),
                         const SizedBox(height: 40),
                         _buildFormCard(context),
                         const SizedBox(height: 24),
                         CupertinoButton(
-                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 12,
+                          ),
                           color: const Color(0xFF00E7FF).withOpacity(0.9),
                           borderRadius: BorderRadius.circular(12),
                           child: const Text(
@@ -194,7 +199,7 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
   Widget _buildFormCard(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF2A2F30).withOpacity(0.3), 
+        color: const Color(0xFF2A2F30).withOpacity(0.3),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -231,8 +236,9 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
                       if (value == null || value.isEmpty) {
                         return 'Please enter your email';
                       }
-                      if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                          .hasMatch(value)) {
+                      if (!RegExp(
+                        r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                      ).hasMatch(value)) {
                         return 'Enter a valid email';
                       }
                       return null;
