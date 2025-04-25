@@ -30,18 +30,17 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  firebase_core: ^2.4.0
-  cloud_firestore: ^4.3.0
-  firebase_auth: ^4.2.0
-  intl: ^0.17.0
-  fl_chart: ^0.55.2
-  cupertino_icons: ^1.0.8
+  firebase_core: ^2.24.0
+  cloud_firestore: ^4.13.0
+  firebase_auth: ^4.16.0
+  intl: ^0.18.0
+  fl_chart: ^0.71.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   
-  flutter_lints: ^5.0.0
+  flutter_lints: ^2.0.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
