@@ -29,7 +29,7 @@ class TrendChartWidget extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       child: LineChart(
         LineChartData(
-          gridData: FlGridData(show: true),
+          gridData: const FlGridData(show: true),
           titlesData: FlTitlesData(
             bottomTitles: AxisTitles(
               sideTitles: SideTitles(
@@ -58,14 +58,14 @@ class TrendChartWidget extends StatelessWidget {
               isCurved: true,
               color: Colors.green,
               barWidth: 2,
-              dotData: FlDotData(show: false),
+              dotData: const FlDotData(show: false),
             ),
             LineChartBarData(
               spots: expenseSpots,
               isCurved: true,
               color: Colors.red,
               barWidth: 2,
-              dotData: FlDotData(show: false),
+              dotData: const FlDotData(show: false),
             ),
           ],
         ),

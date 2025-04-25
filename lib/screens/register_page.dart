@@ -1,5 +1,8 @@
 import 'dart:ui';
 import 'package:budget_tracker/screens/home_page.dart';
+import 'package:budget_tracker/widgets/custom_gradient_button.dart';
+import 'package:budget_tracker/widgets/custom_text_field.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:budget_tracker/services/auth_service.dart';
 
@@ -30,7 +33,6 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
   void initState() {
     super.initState();
 
-  
     _logoController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1500),
@@ -61,7 +63,7 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
     ).animate(_gradientController);
     _gradientColor2 = ColorTween(
       begin: const Color(0xFF4B5EAA), 
-      end: const Color(0xFF1C2526),
+      end: const Color(0xFF1C2526), 
     ).animate(_gradientController);
   }
 
@@ -129,7 +131,7 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
                                   const Icon(
                                     Icons.account_balance_wallet,
                                     size: 60,
-                                    color: Color(0xFFE5E7EB), // Soft White
+                                    color: Color(0xFFE5E7EB), 
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
@@ -161,8 +163,19 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
                         const SizedBox(height: 40),
                         _buildFormCard(context),
                         const SizedBox(height: 24),
-                        CustomNavigationLink(
-                          text: 'Already have an account? Login',
+                        CupertinoButton(
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                          color: const Color(0xFF00E7FF).withOpacity(0.9),
+                          borderRadius: BorderRadius.circular(12),
+                          child: const Text(
+                            'Already have an account? Login',
+                            style: TextStyle(
+                              color: Color(0xFF2D3748),
+                              fontFamily: 'Roboto',
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                            ),
+                          ),
                           onPressed: () => Navigator.pop(context),
                         ),
                         const SizedBox(height: 40),
@@ -179,16 +192,16 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
   }
 
   Widget _buildFormCard(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 500),
+    return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF1C2526).withOpacity(0.3),
+        color: const Color(0xFF2A2F30).withOpacity(0.3), 
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.4),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 15,
+            spreadRadius: 2,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -199,7 +212,7 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
           child: Container(
             padding: const EdgeInsets.all(24.0),
             decoration: BoxDecoration(
-              color: const Color(0xFF1C2526).withOpacity(0.4),
+              color: const Color(0xFF2A2F30).withOpacity(0.4),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
                 color: const Color(0xFF4B5EAA).withOpacity(0.3),
@@ -249,7 +262,7 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
                       child: Text(
                         _errorMessage!,
                         style: const TextStyle(
-                          color: Color(0xFF00E7FF), 
+                          color: Color(0xFF00E7FF),
                           fontSize: 14,
                           fontFamily: 'Roboto',
                         ),
@@ -270,257 +283,3 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
     );
   }
 }
-
-class CustomTextField extends StatefulWidget {
-  final String label;
-  final IconData icon;
-  final TextInputType keyboardType;
-  final bool obscureText;
-  final FormFieldValidator<String> validator;
-  final FormFieldSetter<String> onSaved;
-
-  const CustomTextField({
-    Key? key,
-    required this.label,
-    required this.icon,
-    this.keyboardType = TextInputType.text,
-    this.obscureText = false,
-    required this.validator,
-    required this.onSaved,
-  }) : super(key: key);
-
-  @override
-  _CustomTextFieldState createState() => _CustomTextFieldState();
-}
-
-class _CustomTextFieldState extends State<CustomTextField> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _glowAnimation;
-  bool _isObscured = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1000),
-    );
-    _glowAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
-    _isObscured = widget.obscureText;
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Focus(
-      onFocusChange: (hasFocus) {
-        if (hasFocus) {
-          _controller.repeat(reverse: true);
-        } else {
-          _controller.stop();
-          _controller.value = 0;
-        }
-      },
-      child: AnimatedBuilder(
-        animation: _controller,
-        builder: (context, child) {
-          return Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  const Color(0xFF00E7FF).withOpacity(0.3 * _glowAnimation.value),
-                  const Color(0xFF4B5EAA).withOpacity(0.1 * _glowAnimation.value),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color:
-                      const Color(0xFF00E7FF).withOpacity(0.2 * _glowAnimation.value),
-                  blurRadius: 10,
-                  spreadRadius: 2,
-                ),
-              ],
-            ),
-            child: TextFormField(
-              decoration: InputDecoration(
-                labelText: widget.label,
-                prefixIcon: Icon(widget.icon, color: const Color(0xFFE5E7EB).withOpacity(0.7)),
-                suffixIcon: widget.obscureText
-                    ? IconButton(
-                        icon: Icon(
-                          _isObscured ? Icons.visibility : Icons.visibility_off,
-                          color: const Color(0xFF00E7FF).withOpacity(0.7),
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _isObscured = !_isObscured;
-                          });
-                        },
-                      )
-                    : null,
-                labelStyle: const TextStyle(
-                    color: Color(0xFFE5E7EB), fontFamily: 'Roboto'),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: const Color(0xFF4B5EAA).withOpacity(0.3)),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Color(0xFF00E7FF), width: 2),
-                ),
-                errorBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Color(0xFF00E7FF)),
-                ),
-                focusedErrorBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Color(0xFF00E7FF), width: 2),
-                ),
-                filled: true,
-                fillColor: const Color(0xFF1C2526).withOpacity(0.5),
-              ),
-              style: const TextStyle(color: Color(0xFFE5E7EB), fontFamily: 'Roboto'),
-              keyboardType: widget.keyboardType,
-              obscureText: widget.obscureText && _isObscured,
-              validator: widget.validator,
-              onSaved: widget.onSaved,
-            ),
-          );
-        },
-      ),
-    );
-  }
-}
-
-class CustomGradientButton extends StatelessWidget {
-  final String text;
-  final VoidCallback onPressed;
-  final AnimationController controller;
-  final Animation<double> scaleAnimation;
-
-  const CustomGradientButton({
-    Key? key,
-    required this.text,
-    required this.onPressed,
-    required this.controller,
-    required this.scaleAnimation,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(12),
-      child: ScaleTransition(
-        scale: scaleAnimation,
-        child: GestureDetector(
-          onTapDown: (_) => controller.forward(),
-          onTapUp: (_) {
-            controller.reverse();
-            onPressed();
-          },
-          onTapCancel: () => controller.reverse(),
-          child: Container(
-            constraints: const BoxConstraints(maxWidth: 300),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF4B5EAA), Color(0xFF00E7FF)], 
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.3),
-                  blurRadius: 10,
-                  offset: const Offset(0, 5),
-                ),
-              ],
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-              child: Center(
-                child: Text(
-                  text,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF2D3748), 
-                    fontFamily: 'Poppins',
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class CustomNavigationLink extends StatefulWidget {
-  final String text;
-  final VoidCallback onPressed;
-
-  const CustomNavigationLink({
-    Key? key,
-    required this.text,
-    required this.onPressed,
-  }) : super(key: key);
-
-  @override
-  _CustomNavigationLinkState createState() => _CustomNavigationLinkState();
-}
-
-class _CustomNavigationLinkState extends State<CustomNavigationLink> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _scaleAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 200),
-    );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.1).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return MouseRegion(
-      onEnter: (_) => _controller.forward(),
-      onExit: (_) => _controller.reverse(),
-      child: ScaleTransition(
-        scale: _scaleAnimation,
-        child: TextButton(
-          onPressed: widget.onPressed,
-          child: Text(
-            widget.text,
-            style: const TextStyle(
-              color: Color(0xFF00E7FF), 
-              fontFamily: 'Roboto',
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
