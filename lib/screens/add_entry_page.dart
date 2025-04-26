@@ -67,9 +67,9 @@ class _AddEntryPageState extends State<AddEntryPage> {
         await _firestoreService.addTransaction(transaction);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
+            content: const Text(
               'Entry added successfully',
-              style: const TextStyle(fontFamily: 'Roboto', fontSize: 14),
+              style: TextStyle(fontFamily: 'Roboto', fontSize: 14),
             ),
             backgroundColor: Colors.green[700],
             behavior: SnackBarBehavior.floating,
@@ -405,8 +405,9 @@ class _AddEntryPageState extends State<AddEntryPage> {
                                     decimal: true,
                                   ),
                               validator: (value) {
-                                if (value!.isEmpty)
+                                if (value!.isEmpty) {
                                   return 'Please enter an amount';
+                                }
                                 if (double.tryParse(value) == null ||
                                     double.parse(value) <= 0) {
                                   return 'Enter a valid positive amount';

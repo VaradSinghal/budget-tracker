@@ -20,7 +20,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   final AuthService _authService = AuthService();
   final FirestoreService _firestoreService = FirestoreService();
 
-  final List<Widget> _pages = [SummaryPage(), AddEntryPage(), HistoryPage()];
+  final List<Widget> _pages = [SummaryPage(), const AddEntryPage(), const HistoryPage()];
 
   late AnimationController _chartTitleController;
   late Animation<double> _chartTitleBounceAnimation;
@@ -83,19 +83,17 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     bool isActive = false,
   }) {
     return ShaderMask(
-      shaderCallback:
-          (bounds) => LinearGradient(
-            colors:
-                isActive
-                    ? [
-                      const Color.fromARGB(255, 32, 33, 33),
-                      const Color.fromARGB(255, 56, 57, 57),
-                    ]
-                    : [
-                      const Color.fromARGB(255, 128, 127, 127),
-                      const Color.fromARGB(255, 177, 176, 176),
-                    ],
-          ).createShader(bounds),
+      shaderCallback: (bounds) => LinearGradient(
+        colors: isActive
+            ? [
+                const Color.fromARGB(255, 32, 33, 33),
+                const Color.fromARGB(255, 56, 57, 57),
+              ]
+            : [
+                const Color.fromARGB(255, 128, 127, 127),
+                const Color.fromARGB(255, 177, 176, 176),
+              ],
+      ).createShader(bounds),
       child: Text(
         text,
         style: TextStyle(
@@ -126,10 +124,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           IconButton(
             icon: Icon(
               Icons.logout,
-              color:
-                  _selectedIndex == 0
-                      ? const Color.fromARGB(255, 1, 16, 18)
-                      : Colors.grey,
+              color: _selectedIndex == 0
+                  ? const Color.fromARGB(255, 1, 16, 18)
+                  : Colors.grey,
             ),
             onPressed: _logout,
             tooltip: 'Logout',
@@ -140,10 +137,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors:
-                isDark
-                    ? [const Color(0xFF1E1E1E), const Color(0xFF2C2C2C)]
-                    : [Colors.white, const Color(0xFFE3F2FD)],
+            colors: isDark
+                ? [const Color(0xFF1E1E1E), const Color(0xFF2C2C2C)]
+                : [Colors.white, const Color(0xFFE3F2FD)],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -154,13 +150,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               final isTablet = constraints.maxWidth > 600;
               return Padding(
                 padding: EdgeInsets.symmetric(
-                  horizontal: isTablet ? 24 : 12, 
+                  horizontal: isTablet ? 24 : 12,
                   vertical: 12,
                 ),
                 child: Column(
                   children: [
                     if (_selectedIndex == 0) ...[
-                      _buildTrendChartCard(context, isDark, isTablet),
+                      _buildTrendChartCard(context, isDark, isTablet, constraints.maxWidth),
                       const SizedBox(height: 8),
                     ],
                     Expanded(child: _pages[_selectedIndex]),
@@ -180,10 +176,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       child: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors:
-                isDark
-                    ? [const Color(0xFF2A2F30), const Color(0xFF1E1E1E)]
-                    : [Colors.white, const Color(0xFFE0E0E0)],
+            colors: isDark
+                ? [const Color(0xFF2A2F30), const Color(0xFF1E1E1E)]
+                : [Colors.white, const Color(0xFFE0E0E0)],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -240,10 +235,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     return DrawerHeader(
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors:
-              isDark
-                  ? [const Color(0xFF2A2F30), const Color(0xFF1E1E1E)]
-                  : [const Color(0xFFE3F2FD), Colors.white],
+          colors: isDark
+              ? [const Color(0xFF2A2F30), const Color(0xFF1E1E1E)]
+              : [const Color(0xFFE3F2FD), Colors.white],
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
         ),
@@ -299,10 +293,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             children: [
               Icon(
                 icon,
-                color:
-                    Theme.of(context).brightness == Brightness.dark
-                        ? Colors.grey[400]
-                        : Colors.grey[700],
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.grey[400]
+                    : Colors.grey[700],
                 size: 24,
               ),
               const SizedBox(width: 16),
@@ -318,10 +311,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               ),
               Icon(
                 Icons.arrow_forward_ios,
-                color:
-                    Theme.of(context).brightness == Brightness.dark
-                        ? Colors.grey[400]
-                        : Colors.grey[700],
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.grey[400]
+                    : Colors.grey[700],
                 size: 16,
               ),
             ],
@@ -347,30 +339,27 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         BottomNavigationBarItem(
           icon: Icon(
             Icons.pie_chart,
-            color:
-                _selectedIndex == 0
-                    ? const Color.fromARGB(255, 2, 19, 21)
-                    : (isDark ? Colors.grey[400] : Colors.grey[700]),
+            color: _selectedIndex == 0
+                ? const Color.fromARGB(255, 2, 19, 21)
+                : (isDark ? Colors.grey[400] : Colors.grey[700]),
           ),
           label: 'Summary',
         ),
         BottomNavigationBarItem(
           icon: Icon(
             Icons.add,
-            color:
-                _selectedIndex == 1
-                    ? const Color.fromARGB(255, 0, 19, 21)
-                    : (isDark ? Colors.grey[400] : Colors.grey[700]),
+            color: _selectedIndex == 1
+                ? const Color.fromARGB(255, 0, 19, 21)
+                : (isDark ? Colors.grey[400] : Colors.grey[700]),
           ),
           label: 'Add Entry',
         ),
         BottomNavigationBarItem(
           icon: Icon(
             Icons.history,
-            color:
-                _selectedIndex == 2
-                    ? const Color.fromARGB(255, 1, 21, 23)
-                    : (isDark ? Colors.grey[400] : Colors.grey[700]),
+            color: _selectedIndex == 2
+                ? const Color.fromARGB(255, 1, 21, 23)
+                : (isDark ? Colors.grey[400] : Colors.grey[700]),
           ),
           label: 'History',
         ),
@@ -382,12 +371,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     BuildContext context,
     bool isDark,
     bool isTablet,
+    double maxWidth,
   ) {
     return Container(
       padding: EdgeInsets.all(isTablet ? 16 : 12),
       decoration: BoxDecoration(
         color: isDark ? Colors.black12 : Colors.white,
-        borderRadius: BorderRadius.circular(16), 
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
@@ -406,14 +396,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 scale: _chartTitleBounceAnimation.value,
                 child: buildGradientText(
                   'Income vs Expenses Trend',
-                  fontSize: 18, 
+                  fontSize: 18,
                   isActive: true,
                 ),
               );
             },
           ),
           const SizedBox(height: 12),
-          StreamBuilder<Map<String, dynamic>>(
+          StreamBuilder<Map<String, Map<String, double>>>(
             stream: _firestoreService.getMonthlyTrends(6),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
@@ -425,7 +415,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               if (snapshot.hasError) {
                 return Center(
                   child: Text(
-                    'Error loading trends: ${snapshot.error}',
+                    'Error loading trends',
                     style: TextStyle(
                       color: isDark ? Colors.red[300] : Colors.red,
                       fontFamily: 'Roboto',
@@ -434,7 +424,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 );
               }
 
-              if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              final trends = snapshot.data ?? {};
+              if (trends.isEmpty) {
                 return const Center(
                   child: Text(
                     'No trend data available',
@@ -443,51 +434,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 );
               }
 
-              try {
-                final trends = snapshot.data!.map(
-                  (key, value) => MapEntry(
-                    key,
-                    (value as Map<dynamic, dynamic>).map(
-                      (k, v) => MapEntry(
-                        k.toString(),
-                        (v is num) ? v.toDouble() : 0.0,
-                      ),
-                    ),
-                  ),
-                );
-
-                if (trends.isEmpty ||
-                    !trends.values.every(
-                      (map) =>
-                          map.containsKey('income') &&
-                          map.containsKey('expenses'),
-                    )) {
-                  return const Center(
-                    child: Text(
-                      'Invalid trend data format',
-                      style: TextStyle(fontFamily: 'Roboto', fontSize: 16),
-                    ),
-                  );
-                }
-
-                return SizedBox(
-                  height: 200, 
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: TrendChartWidget(trends: trends, months: 6),
-                  ),
-                );
-              } catch (e) {
-                return Center(
-                  child: Text(
-                    'Error processing trends: $e',
-                    style: TextStyle(
-                      color: isDark ? Colors.red[300] : Colors.red,
-                      fontFamily: 'Roboto',
-                    ),
-                  ),
-                );
-              }
+              return SizedBox(
+                height: 200,
+                width: maxWidth - (isTablet ? 48 : 24), 
+                child: Container(
+                  child: TrendChartWidget(trends: trends, months: 6),
+                ),
+              );
             },
           ),
         ],

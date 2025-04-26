@@ -43,26 +43,56 @@ class FirestoreService {
     String? category,
   }) {
     var query = _getTransactionsCollection().orderBy('date', descending: true);
+
     if (startDate != null && endDate != null) {
+      final adjustedStartDate = DateTime(
+        startDate.year,
+        startDate.month,
+        startDate.day,
+        0,
+        0,
+        0,
+      );
+      final adjustedEndDate = DateTime(
+        endDate.year,
+        endDate.month,
+        endDate.day,
+        23,
+        59,
+        59,
+        999,
+      );
+
       query = query
-          .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(startDate))
-          .where('date', isLessThanOrEqualTo: Timestamp.fromDate(endDate));
+          .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(adjustedStartDate))
+          .where('date', isLessThanOrEqualTo: Timestamp.fromDate(adjustedEndDate));
     }
+
     if (category != null) {
-      query = query.where('category', isEqualTo: category);
+      // Only apply category filter if the category is not null
+      query = query.where('category', isEqualTo: category, isNull: false);
     }
 
     return query.snapshots().map((snapshot) {
-      return snapshot.docs.map((doc) {
-        return app.Transaction.fromMap(doc.data(), doc.id);
-      }).toList();
+      try {
+        return snapshot.docs
+            .map((doc) => app.Transaction.fromMap(doc.data(), doc.id))
+            .whereType<app.Transaction>() // Filter out null results
+            .toList();
+      } catch (e) {
+        print('Error mapping transaction data: $e');
+        return [];
+      }
     });
   }
 
   Stream<Map<String, dynamic>> getSummary(DateTime startDate, DateTime endDate) {
+    final adjustedStartDate = DateTime(startDate.year, startDate.month, startDate.day, 0, 0, 0);
+    final adjustedEndDate = DateTime(endDate.year, endDate.month, endDate.day, 23, 59, 59, 999);
+
     return _getTransactionsCollection()
-        .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(startDate))
-        .where('date', isLessThanOrEqualTo: Timestamp.fromDate(endDate))
+        .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(adjustedStartDate))
+        .where('date', isLessThanOrEqualTo: Timestamp.fromDate(adjustedEndDate))
         .snapshots()
         .map((snapshot) {
       double totalIncome = 0;
@@ -80,8 +110,7 @@ class FirestoreService {
         } else {
           totalExpenses += amount;
           if (category != null) {
-            categoryBreakdown[category] =
-                (categoryBreakdown[category] ?? 0) + amount;
+            categoryBreakdown[category] = (categoryBreakdown[category] ?? 0) + amount;
           }
         }
       }
@@ -107,7 +136,7 @@ class FirestoreService {
         'Transport',
         'Health',
         'Education',
-      }.toList(); 
+      }.toList();
     });
   }
 
@@ -161,11 +190,9 @@ class FirestoreService {
 
         trends[monthKey] ??= {'income': 0.0, 'expenses': 0.0};
         if (type == 'income') {
-          trends[monthKey]!['income'] =
-              trends[monthKey]!['income']! + amount;
+          trends[monthKey]!['income'] = trends[monthKey]!['income']! + amount;
         } else {
-          trends[monthKey]!['expenses'] =
-              trends[monthKey]!['expenses']! + amount;
+          trends[monthKey]!['expenses'] = trends[monthKey]!['expenses']! + amount;
         }
       }
 

@@ -7,7 +7,7 @@ class TrendChartWidget extends StatefulWidget {
   final int months;
 
   const TrendChartWidget({required this.trends, required this.months, Key? key})
-    : super(key: key);
+      : super(key: key);
 
   @override
   _TrendChartWidgetState createState() => _TrendChartWidgetState();
@@ -15,7 +15,6 @@ class TrendChartWidget extends StatefulWidget {
 
 class _TrendChartWidgetState extends State<TrendChartWidget> {
   int touchedIndex = -1;
-
 
   @override
   Widget build(BuildContext context) {
@@ -40,9 +39,29 @@ class _TrendChartWidgetState extends State<TrendChartWidget> {
 
     for (int i = 0; i < sortedKeys.length; i++) {
       final key = sortedKeys[i];
-      incomeSpots.add(FlSpot(i.toDouble(), widget.trends[key]!['income']!));
-      expenseSpots.add(FlSpot(i.toDouble(), widget.trends[key]!['expenses']!));
+      final income = widget.trends[key]?['income'] ?? 0.0;
+      final expenses = widget.trends[key]?['expenses'] ?? 0.0;
+      incomeSpots.add(FlSpot(i.toDouble(), income));
+      expenseSpots.add(FlSpot(i.toDouble(), expenses));
     }
+
+    if (incomeSpots.isEmpty || expenseSpots.isEmpty) {
+      return Center(
+        child: Text(
+          'No valid trend data to plot',
+          style: TextStyle(
+            fontFamily: 'Roboto',
+            fontSize: 14,
+            color: isDark ? Colors.grey[400] : Colors.grey[700],
+          ),
+        ),
+      );
+    }
+
+    // Calculate maxY dynamically based on data
+    final maxIncome = incomeSpots.map((spot) => spot.y).reduce((a, b) => a > b ? a : b);
+    final maxExpenses = expenseSpots.map((spot) => spot.y).reduce((a, b) => a > b ? a : b);
+    final maxY = (maxIncome > maxExpenses ? maxIncome : maxExpenses) * 1.2;
 
     return Container(
       padding: const EdgeInsets.all(10),
@@ -68,8 +87,7 @@ class _TrendChartWidgetState extends State<TrendChartWidget> {
                 lineTouchData: LineTouchData(
                   enabled: true,
                   touchTooltipData: LineTouchTooltipData(
-                    getTooltipColor:
-                        (_) => isDark ? Colors.grey[800]! : Colors.white,
+                    getTooltipColor: (_) => isDark ? Colors.grey[800]! : Colors.white,
                     tooltipRoundedRadius: 8,
                     getTooltipItems: (touchedSpots) {
                       return touchedSpots.map((spot) {
@@ -82,10 +100,7 @@ class _TrendChartWidgetState extends State<TrendChartWidget> {
                           TextStyle(
                             fontFamily: 'Roboto',
                             fontSize: 12,
-                            color:
-                                spot.barIndex == 0
-                                    ? Colors.green[700]
-                                    : Colors.red[700],
+                            color: spot.barIndex == 0 ? Colors.green[700] : Colors.red[700],
                             fontWeight: FontWeight.w500,
                           ),
                         );
@@ -101,13 +116,12 @@ class _TrendChartWidgetState extends State<TrendChartWidget> {
                           strokeWidth: 2,
                         ),
                         FlDotData(
-                          getDotPainter:
-                              (spot, percent, bar, index) => FlDotCirclePainter(
-                                radius: 6,
-                                color: bar.color!,
-                                strokeWidth: 2,
-                                strokeColor: Colors.white,
-                              ),
+                          getDotPainter: (spot, percent, bar, index) => FlDotCirclePainter(
+                            radius: 6,
+                            color: bar.color!,
+                            strokeWidth: 2,
+                            strokeColor: Colors.white,
+                          ),
                         ),
                       );
                     }).toList();
@@ -116,16 +130,11 @@ class _TrendChartWidgetState extends State<TrendChartWidget> {
                 gridData: FlGridData(
                   show: true,
                   drawVerticalLine: false,
-                  horizontalInterval:
-                      widget.trends.values
-                          .map((e) => (e['income']! + e['expenses']!) / 2)
-                          .reduce((a, b) => a > b ? a : b) /
-                      5,
-                  getDrawingHorizontalLine:
-                      (value) => FlLine(
-                        color: isDark ? Colors.grey[700] : Colors.grey[300],
-                        strokeWidth: 0.5,
-                      ),
+                  horizontalInterval: maxY / 5,
+                  getDrawingHorizontalLine: (value) => FlLine(
+                    color: isDark ? Colors.grey[700] : Colors.grey[300],
+                    strokeWidth: 0.5,
+                  ),
                 ),
                 titlesData: FlTitlesData(
                   bottomTitles: AxisTitles(
@@ -137,9 +146,7 @@ class _TrendChartWidgetState extends State<TrendChartWidget> {
                         if (value.toInt() >= sortedKeys.length) {
                           return const Text('');
                         }
-                        final date = DateFormat(
-                          'yyyy-MM',
-                        ).parse(sortedKeys[value.toInt()]);
+                        final date = DateFormat('yyyy-MM').parse(sortedKeys[value.toInt()]);
                         return Padding(
                           padding: const EdgeInsets.only(top: 4),
                           child: Text(
@@ -147,8 +154,7 @@ class _TrendChartWidgetState extends State<TrendChartWidget> {
                             style: TextStyle(
                               fontFamily: 'Roboto',
                               fontSize: 10,
-                              color:
-                                  isDark ? Colors.grey[400] : Colors.grey[700],
+                              color: isDark ? Colors.grey[400] : Colors.grey[700],
                             ),
                           ),
                         );
@@ -159,11 +165,7 @@ class _TrendChartWidgetState extends State<TrendChartWidget> {
                     sideTitles: SideTitles(
                       showTitles: true,
                       reservedSize: 36,
-                      interval:
-                          widget.trends.values
-                              .map((e) => (e['income']! + e['expenses']!) / 2)
-                              .reduce((a, b) => a > b ? a : b) /
-                          5,
+                      interval: maxY / 5,
                       getTitlesWidget: (value, meta) {
                         return Text(
                           '\$${value.toInt()}',
@@ -229,11 +231,7 @@ class _TrendChartWidgetState extends State<TrendChartWidget> {
                   ),
                 ],
                 minY: 0,
-                maxY:
-                    widget.trends.values
-                        .map((e) => (e['income']! + e['expenses']!) / 2)
-                        .reduce((a, b) => a > b ? a : b) *
-                    1.2,
+                maxY: maxY > 0 ? maxY : 10.0, // Default to 10 if no data
               ),
               duration: const Duration(milliseconds: 600),
             ),
