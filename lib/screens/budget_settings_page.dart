@@ -35,7 +35,7 @@ class _BudgetSettingsPageState extends State<BudgetSettingsPage>
   }
 
   void _addOrUpdateBudget(List<Budget> budgets) async {
-    if (_isSaving) return; // Prevent multiple submissions
+    if (_isSaving) return;
     if (_formKey.currentState!.validate()) {
       setState(() {
         _isSaving = true;
@@ -62,7 +62,6 @@ class _BudgetSettingsPageState extends State<BudgetSettingsPage>
             behavior: SnackBarBehavior.floating,
           ),
         );
-        // Clear the form without resetting the entire UI
         _formKey.currentState!.reset();
         _budgetLimitController.clear();
         setState(() {
@@ -111,17 +110,19 @@ class _BudgetSettingsPageState extends State<BudgetSettingsPage>
     bool isActive = true,
   }) {
     return ShaderMask(
-      shaderCallback: (bounds) => LinearGradient(
-        colors: isActive
-            ? [
-                const Color.fromARGB(255, 32, 33, 33),
-                const Color.fromARGB(255, 56, 57, 57),
-              ]
-            : [
-                const Color.fromARGB(255, 128, 127, 127),
-                const Color.fromARGB(255, 177, 176, 176),
-              ],
-      ).createShader(bounds),
+      shaderCallback:
+          (bounds) => LinearGradient(
+            colors:
+                isActive
+                    ? [
+                      const Color.fromARGB(255, 32, 33, 33),
+                      const Color.fromARGB(255, 56, 57, 57),
+                    ]
+                    : [
+                      const Color.fromARGB(255, 128, 127, 127),
+                      const Color.fromARGB(255, 177, 176, 176),
+                    ],
+          ).createShader(bounds),
       child: Text(
         text,
         style: TextStyle(
@@ -139,6 +140,7 @@ class _BudgetSettingsPageState extends State<BudgetSettingsPage>
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
+      resizeToAvoidBottomInset: true, // Allow resizing for keyboard
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -159,38 +161,42 @@ class _BudgetSettingsPageState extends State<BudgetSettingsPage>
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: isDark
-                ? [const Color(0xFF1E1E1E), const Color(0xFF2C2C2C)]
-                : [Colors.white, const Color(0xFFE3F2FD)],
+            colors:
+                isDark
+                    ? [const Color(0xFF1E1E1E), const Color(0xFF2C2C2C)]
+                    : [Colors.white, const Color(0xFFE3F2FD)],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
         ),
         child: SafeArea(
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final isTablet = constraints.maxWidth > 600;
-              return Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: isTablet ? 32 : 16,
-                  vertical: 16,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildBudgetForm(isDark, isTablet),
-                    const SizedBox(height: 24),
-                    _buildGradientText(
-                      'Current Budgets',
-                      fontSize: 20,
-                      isActive: true,
-                    ),
-                    const SizedBox(height: 16),
-                    Expanded(child: _buildBudgetList(isDark)),
-                  ],
-                ),
-              );
-            },
+          child: SingleChildScrollView(
+            // Wrap in SingleChildScrollView
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final isTablet = constraints.maxWidth > 600;
+                return Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isTablet ? 32 : 16,
+                    vertical: 16,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildBudgetForm(isDark, isTablet),
+                      const SizedBox(height: 24),
+                      _buildGradientText(
+                        'Current Budgets',
+                        fontSize: 20,
+                        isActive: true,
+                      ),
+                      const SizedBox(height: 16),
+                      _buildBudgetList(isDark),
+                    ],
+                  ),
+                );
+              },
+            ),
           ),
         ),
       ),
@@ -264,32 +270,32 @@ class _BudgetSettingsPageState extends State<BudgetSettingsPage>
                   children: [
                     DropdownButtonFormField<String>(
                       value: _selectedCategory,
-                      items: categorySnapshot.data!
-                          .map(
-                            (category) => DropdownMenuItem(
-                              value: category,
-                              child: Text(
-                                category,
-                                style: const TextStyle(
-                                  fontFamily: 'Roboto',
-                                  fontSize: 16,
+                      items:
+                          categorySnapshot.data!
+                              .map(
+                                (category) => DropdownMenuItem(
+                                  value: category,
+                                  child: Text(
+                                    category,
+                                    style: const TextStyle(
+                                      fontFamily: 'Roboto',
+                                      fontSize: 16,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ),
-                          )
-                          .toList(),
+                              )
+                              .toList(),
                       onChanged: (value) {
                         _selectedCategory = value;
                         final existingBudget = budgets.firstWhere(
                           (budget) => budget.category == value,
-                          orElse: () =>
-                              Budget(id: '', category: value!, limit: 0),
+                          orElse:
+                              () => Budget(id: '', category: value!, limit: 0),
                         );
                         _budgetLimitController.text =
                             existingBudget.limit == 0
                                 ? ''
                                 : existingBudget.limit.toString();
-                        // Avoid setState to prevent full rebuild
                       },
                       decoration: InputDecoration(
                         labelText: 'Category',
@@ -308,8 +314,9 @@ class _BudgetSettingsPageState extends State<BudgetSettingsPage>
                           vertical: 12,
                         ),
                       ),
-                      validator: (value) =>
-                          value == null ? 'Please select a category' : null,
+                      validator:
+                          (value) =>
+                              value == null ? 'Please select a category' : null,
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
@@ -350,9 +357,8 @@ class _BudgetSettingsPageState extends State<BudgetSettingsPage>
                     ),
                     const SizedBox(height: 20),
                     ElevatedButton(
-                      onPressed: _isSaving
-                          ? null
-                          : () => _addOrUpdateBudget(budgets),
+                      onPressed:
+                          _isSaving ? null : () => _addOrUpdateBudget(budgets),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color.fromARGB(255, 1, 19, 21),
                         foregroundColor: Colors.white,
@@ -364,23 +370,24 @@ class _BudgetSettingsPageState extends State<BudgetSettingsPage>
                           vertical: 12,
                         ),
                       ),
-                      child: _isSaving
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
+                      child:
+                          _isSaving
+                              ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                              : const Text(
+                                'Save Budget',
+                                style: TextStyle(
+                                  fontFamily: 'Roboto',
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 16,
+                                ),
                               ),
-                            )
-                          : const Text(
-                              'Save Budget',
-                              style: TextStyle(
-                                fontFamily: 'Roboto',
-                                fontWeight: FontWeight.w600,
-                                fontSize: 16,
-                              ),
-                            ),
                     ),
                   ],
                 ),
@@ -422,57 +429,60 @@ class _BudgetSettingsPageState extends State<BudgetSettingsPage>
           );
         }
         final budgets = snapshot.data!;
-        return ListView.builder(
-          itemCount: budgets.length,
-          itemBuilder: (context, index) {
-            final budget = budgets[index];
-            return FadeTransition(
-              opacity: _fadeController,
-              child: Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                decoration: BoxDecoration(
-                  color: isDark ? Colors.black12 : Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
+        return SizedBox(
+          height: MediaQuery.of(context).size.height * 0.4, // Limit height
+          child: ListView.builder(
+            itemCount: budgets.length,
+            itemBuilder: (context, index) {
+              final budget = budgets[index];
+              return FadeTransition(
+                opacity: _fadeController,
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: isDark ? Colors.black12 : Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
                     ),
-                  ],
+                    title: Text(
+                      budget.category,
+                      style: const TextStyle(
+                        fontFamily: 'Roboto',
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    subtitle: Text(
+                      'Limit: \$${budget.limit.toStringAsFixed(2)}',
+                      style: TextStyle(
+                        fontFamily: 'Roboto',
+                        fontSize: 14,
+                        color: isDark ? Colors.grey[400] : Colors.grey[700],
+                      ),
+                    ),
+                    trailing: IconButton(
+                      icon: Icon(
+                        Icons.delete,
+                        color: isDark ? Colors.red[300] : Colors.red[700],
+                      ),
+                      onPressed: () => _deleteBudget(budget.id),
+                    ),
+                  ),
                 ),
-                child: ListTile(
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  title: Text(
-                    budget.category,
-                    style: const TextStyle(
-                      fontFamily: 'Roboto',
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  subtitle: Text(
-                    'Limit: \$${budget.limit.toStringAsFixed(2)}',
-                    style: TextStyle(
-                      fontFamily: 'Roboto',
-                      fontSize: 14,
-                      color: isDark ? Colors.grey[400] : Colors.grey[700],
-                    ),
-                  ),
-                  trailing: IconButton(
-                    icon: Icon(
-                      Icons.delete,
-                      color: isDark ? Colors.red[300] : Colors.red[700],
-                    ),
-                    onPressed: () => _deleteBudget(budget.id),
-                  ),
-                ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         );
       },
     );
