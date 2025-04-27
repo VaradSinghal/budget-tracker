@@ -17,6 +17,8 @@ analyzer:
     file_names: ignore
     avoid_print: ignore
     avoid_unnecessary_containers: ignore
+    prefer_const_declarations: ignore
+    prefer_collection_literals: ignore
 include: package:flutter_lints/flutter.yaml
 
 linter:

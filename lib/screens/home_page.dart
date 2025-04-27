@@ -7,6 +7,7 @@ import 'package:budget_tracker/screens/budget_settings_page.dart';
 import 'package:budget_tracker/services/auth_service.dart';
 import 'package:budget_tracker/widgets/trend_chart_widget.dart';
 import 'package:budget_tracker/services/firestore_service.dart';
+import 'package:google_nav_bar/google_nav_bar.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -19,8 +20,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   int _selectedIndex = 0;
   final AuthService _authService = AuthService();
   final FirestoreService _firestoreService = FirestoreService();
-
-  final List<Widget> _pages = [SummaryPage(), const AddEntryPage(), const HistoryPage()];
+  final ScrollController _scrollController = ScrollController();
 
   late AnimationController _chartTitleController;
   late Animation<double> _chartTitleBounceAnimation;
@@ -54,6 +54,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   void dispose() {
     _chartTitleController.dispose();
     _drawerHeaderController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -62,6 +63,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       _selectedIndex = index;
       if (index == 0) {
         _chartTitleController.forward(from: 0);
+        _scrollController.animateTo(
+          0,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
       }
     });
   }
@@ -71,37 +77,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Logged out successfully'),
-        backgroundColor: Color.fromARGB(255, 27, 28, 28),
+        backgroundColor: Colors.grey,
         behavior: SnackBarBehavior.floating,
-      ),
-    );
-  }
-
-  Widget buildGradientText(
-    String text, {
-    double fontSize = 24,
-    bool isActive = false,
-  }) {
-    return ShaderMask(
-      shaderCallback: (bounds) => LinearGradient(
-        colors: isActive
-            ? [
-                const Color.fromARGB(255, 32, 33, 33),
-                const Color.fromARGB(255, 56, 57, 57),
-              ]
-            : [
-                const Color.fromARGB(255, 128, 127, 127),
-                const Color.fromARGB(255, 177, 176, 176),
-              ],
-      ).createShader(bounds),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: fontSize,
-          fontFamily: 'Poppins',
-          fontWeight: FontWeight.bold,
-          color: Colors.white,
-        ),
       ),
     );
   }
@@ -111,122 +88,114 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      extendBodyBehindAppBar: true,
+      backgroundColor: isDark ? Colors.grey[900] : Colors.grey[100],
+      extendBody: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: buildGradientText(
+        title: Text(
           'Budget Tracker',
-          fontSize: 26,
-          isActive: true,
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w600,
+            color: isDark ? Colors.white : Colors.black,
+          ),
         ),
         actions: [
           IconButton(
             icon: Icon(
               Icons.logout,
-              color: _selectedIndex == 0
-                  ? const Color.fromARGB(255, 1, 16, 18)
-                  : Colors.grey,
+              color: isDark ? Colors.white : Colors.black,
             ),
             onPressed: _logout,
-            tooltip: 'Logout',
           ),
         ],
       ),
       drawer: _buildDrawer(isDark),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: isDark
-                ? [const Color(0xFF1E1E1E), const Color(0xFF2C2C2C)]
-                : [Colors.white, const Color(0xFFE3F2FD)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
-        child: SafeArea(
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final isTablet = constraints.maxWidth > 600;
-              return Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: isTablet ? 24 : 12,
-                  vertical: 12,
-                ),
-                child: Column(
-                  children: [
-                    if (_selectedIndex == 0) ...[
-                      _buildTrendChartCard(context, isDark, isTablet, constraints.maxWidth),
-                      const SizedBox(height: 8),
-                    ],
-                    Expanded(child: _pages[_selectedIndex]),
-                  ],
-                ),
-              );
-            },
-          ),
-        ),
-      ),
+      // Use IndexedStack to maintain state across tab changes
+      body:
+          _selectedIndex == 0
+              ? _buildHomeTab(isDark)
+              : IndexedStack(
+                index: _selectedIndex - 1,
+                sizing: StackFit.expand,
+                children: const [AddEntryPage(), HistoryPage()],
+              ),
       bottomNavigationBar: _buildBottomNavigationBar(isDark),
+    );
+  }
+
+  Widget _buildHomeTab(bool isDark) {
+    return SingleChildScrollView(
+      controller: _scrollController,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildTrendChartCard(context, isDark),
+          const SizedBox(height: 16),
+
+          // Use a Container with constraints to prevent layout issues
+          Container(
+            constraints: BoxConstraints(
+              // Use MediaQuery to get screen height and set a minimum height
+              minHeight: MediaQuery.of(context).size.height - 300,
+            ),
+            child: SummaryPage(),
+          ),
+
+          // Add bottom padding for navigation bar
+          const SizedBox(height: 80),
+        ],
+      ),
     );
   }
 
   Widget _buildDrawer(bool isDark) {
     return Drawer(
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: isDark
-                ? [const Color(0xFF2A2F30), const Color(0xFF1E1E1E)]
-                : [Colors.white, const Color(0xFFE0E0E0)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+      backgroundColor: isDark ? Colors.grey[800] : Colors.white,
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          _buildDrawerHeader(isDark),
+          _buildDrawerTile(
+            isDark: isDark,
+            title: 'Manage Categories',
+            icon: Icons.category,
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ManageCategoriesPage(),
+                ),
+              );
+            },
           ),
-        ),
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            _buildDrawerHeader(isDark),
-            _buildDrawerTile(
-              title: 'Manage Categories',
-              icon: Icons.category,
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const ManageCategoriesPage(),
-                  ),
-                );
-              },
-            ),
-            _buildDrawerTile(
-              title: 'Budget Settings',
-              icon: Icons.account_balance_wallet,
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const BudgetSettingsPage()),
-                );
-              },
-            ),
-            const Divider(
-              color: Colors.grey,
-              thickness: 0.5,
-              indent: 16,
-              endIndent: 16,
-            ),
-            _buildDrawerTile(
-              title: 'Logout',
-              icon: Icons.logout,
-              onTap: () {
-                Navigator.pop(context);
-                _logout();
-              },
-            ),
-          ],
-        ),
+          _buildDrawerTile(
+            isDark: isDark,
+            title: 'Budget Settings',
+            icon: Icons.settings,
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const BudgetSettingsPage(),
+                ),
+              );
+            },
+          ),
+          const Divider(height: 32, indent: 16, endIndent: 16),
+          _buildDrawerTile(
+            isDark: isDark,
+            title: 'Logout',
+            icon: Icons.logout,
+            onTap: () {
+              Navigator.pop(context);
+              _logout();
+            },
+          ),
+        ],
       ),
     );
   }
@@ -234,13 +203,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Widget _buildDrawerHeader(bool isDark) {
     return DrawerHeader(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: isDark
-              ? [const Color(0xFF2A2F30), const Color(0xFF1E1E1E)]
-              : [const Color(0xFFE3F2FD), Colors.white],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        ),
+        color: isDark ? Colors.grey[700] : Colors.grey[200],
       ),
       child: AnimatedBuilder(
         animation: _drawerHeaderController,
@@ -250,20 +213,27 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                CircleAvatar(
-                  radius: 40,
-                  backgroundColor: isDark ? Colors.grey[800] : Colors.grey[200],
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: isDark ? Colors.grey[600] : Colors.grey[300],
+                    shape: BoxShape.circle,
+                  ),
                   child: Icon(
                     Icons.account_balance_wallet,
-                    size: 50,
-                    color: isDark ? Colors.grey[400] : Colors.grey[700],
+                    size: 40,
+                    color: isDark ? Colors.white : Colors.black,
                   ),
                 ),
-                const SizedBox(height: 12),
-                buildGradientText(
+                const SizedBox(height: 16),
+                Text(
                   'Budget Tracker',
-                  fontSize: 24,
-                  isActive: true,
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white : Colors.black,
+                  ),
                 ),
               ],
             ),
@@ -274,109 +244,69 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Widget _buildDrawerTile({
+    required bool isDark,
     required String title,
     required IconData icon,
     required VoidCallback onTap,
   }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            color: Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                icon,
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? Colors.grey[400]
-                    : Colors.grey[700],
-                size: 24,
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontFamily: 'Roboto',
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-              Icon(
-                Icons.arrow_forward_ios,
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? Colors.grey[400]
-                    : Colors.grey[700],
-                size: 16,
-              ),
-            ],
-          ),
-        ),
+    return ListTile(
+      leading: Icon(icon, color: isDark ? Colors.white : Colors.black),
+      title: Text(
+        title,
+        style: TextStyle(color: isDark ? Colors.white : Colors.black),
       ),
+      trailing: Icon(
+        Icons.chevron_right,
+        color: isDark ? Colors.white54 : Colors.black54,
+      ),
+      onTap: onTap,
     );
   }
 
   Widget _buildBottomNavigationBar(bool isDark) {
-    return BottomNavigationBar(
-      backgroundColor: isDark ? const Color(0xFF2C2C2C) : Colors.white,
-      selectedItemColor: const Color.fromARGB(255, 1, 19, 21),
-      unselectedItemColor: isDark ? Colors.grey[400] : Colors.grey[700],
-      selectedLabelStyle: const TextStyle(
-        fontFamily: 'Roboto',
-        fontWeight: FontWeight.w600,
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? Colors.grey[800] : Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, -4),
+          ),
+        ],
       ),
-      unselectedLabelStyle: const TextStyle(fontFamily: 'Roboto'),
-      currentIndex: _selectedIndex,
-      onTap: _onItemTapped,
-      items: [
-        BottomNavigationBarItem(
-          icon: Icon(
-            Icons.pie_chart,
-            color: _selectedIndex == 0
-                ? const Color.fromARGB(255, 2, 19, 21)
-                : (isDark ? Colors.grey[400] : Colors.grey[700]),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          child: GNav(
+            rippleColor: isDark ? Colors.grey[600]! : Colors.grey[300]!,
+            hoverColor: isDark ? Colors.grey[600]! : Colors.grey[300]!,
+            gap: 8,
+            activeColor: isDark ? Colors.white : Colors.black,
+            iconSize: 24,
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            duration: const Duration(milliseconds: 300),
+            color: isDark ? Colors.white70 : Colors.black54,
+            tabBackgroundColor: isDark ? Colors.grey[700]! : Colors.grey[200]!,
+            tabs: const [
+              GButton(icon: Icons.pie_chart, text: 'Summary'),
+              GButton(icon: Icons.add, text: 'Add Entry'),
+              GButton(icon: Icons.history, text: 'History'),
+            ],
+            selectedIndex: _selectedIndex,
+            onTabChange: _onItemTapped,
           ),
-          label: 'Summary',
         ),
-        BottomNavigationBarItem(
-          icon: Icon(
-            Icons.add,
-            color: _selectedIndex == 1
-                ? const Color.fromARGB(255, 0, 19, 21)
-                : (isDark ? Colors.grey[400] : Colors.grey[700]),
-          ),
-          label: 'Add Entry',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(
-            Icons.history,
-            color: _selectedIndex == 2
-                ? const Color.fromARGB(255, 1, 21, 23)
-                : (isDark ? Colors.grey[400] : Colors.grey[700]),
-          ),
-          label: 'History',
-        ),
-      ],
+      ),
     );
   }
 
-  Widget _buildTrendChartCard(
-    BuildContext context,
-    bool isDark,
-    bool isTablet,
-    double maxWidth,
-  ) {
+  Widget _buildTrendChartCard(BuildContext context, bool isDark) {
     return Container(
-      padding: EdgeInsets.all(isTablet ? 16 : 12),
+      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: isDark ? Colors.black12 : Colors.white,
+        color: isDark ? Colors.grey[800] : Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -394,21 +324,26 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             builder: (context, child) {
               return Transform.scale(
                 scale: _chartTitleBounceAnimation.value,
-                child: buildGradientText(
+                child: Text(
                   'Income vs Expenses Trend',
-                  fontSize: 18,
-                  isActive: true,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white : Colors.black,
+                  ),
                 ),
               );
             },
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           StreamBuilder<Map<String, Map<String, double>>>(
             stream: _firestoreService.getMonthlyTrends(6),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(
-                  child: CircularProgressIndicator(color: Color(0xFF00E7FF)),
+                return Center(
+                  child: CircularProgressIndicator(
+                    color: isDark ? Colors.white : Colors.black,
+                  ),
                 );
               }
 
@@ -418,7 +353,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     'Error loading trends',
                     style: TextStyle(
                       color: isDark ? Colors.red[300] : Colors.red,
-                      fontFamily: 'Roboto',
                     ),
                   ),
                 );
@@ -426,19 +360,23 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
               final trends = snapshot.data ?? {};
               if (trends.isEmpty) {
-                return const Center(
+                return Center(
                   child: Text(
                     'No trend data available',
-                    style: TextStyle(fontFamily: 'Roboto', fontSize: 16),
+                    style: TextStyle(
+                      color: isDark ? Colors.white70 : Colors.black54,
+                    ),
                   ),
                 );
               }
 
               return SizedBox(
                 height: 200,
-                width: maxWidth - (isTablet ? 48 : 24), 
-                child: Container(
-                  child: TrendChartWidget(trends: trends, months: 6),
+                child: TrendChartWidget(
+                  trends: trends,
+                  months: 6,
+                  isDark: isDark,
+                  colorScheme: Theme.of(context).colorScheme,
                 ),
               );
             },

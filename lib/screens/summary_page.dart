@@ -139,6 +139,7 @@ class SummaryPage extends StatelessWidget {
                               ),
                               child: PieChartWidget(
                                 categoryBreakdown: categoryBreakdown,
+                                colorScheme: const [],
                               ),
                             ),
                             const SizedBox(height: 12),

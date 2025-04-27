@@ -6,7 +6,7 @@ class TrendChartWidget extends StatefulWidget {
   final Map<String, Map<String, double>> trends;
   final int months;
 
-  const TrendChartWidget({required this.trends, required this.months, Key? key})
+  const TrendChartWidget({required this.trends, required this.months, Key? key, required bool isDark, required ColorScheme colorScheme})
       : super(key: key);
 
   @override

@@ -4,7 +4,7 @@ import 'package:fl_chart/fl_chart.dart';
 class PieChartWidget extends StatefulWidget {
   final Map<String, double> categoryBreakdown;
 
-  const PieChartWidget({required this.categoryBreakdown, Key? key})
+  const PieChartWidget({required this.categoryBreakdown, Key? key, required List<Color> colorScheme})
     : super(key: key);
 
   @override

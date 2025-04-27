@@ -14,8 +14,9 @@ class _BudgetSettingsPageState extends State<BudgetSettingsPage>
   final FirestoreService _firestoreService = FirestoreService();
   final _formKey = GlobalKey<FormState>();
   String? _selectedCategory;
-  String _budgetLimit = '';
+  final _budgetLimitController = TextEditingController();
   late AnimationController _fadeController;
+  bool _isSaving = false;
 
   @override
   void initState() {
@@ -29,12 +30,16 @@ class _BudgetSettingsPageState extends State<BudgetSettingsPage>
   @override
   void dispose() {
     _fadeController.dispose();
+    _budgetLimitController.dispose();
     super.dispose();
   }
 
   void _addOrUpdateBudget(List<Budget> budgets) async {
+    if (_isSaving) return; // Prevent multiple submissions
     if (_formKey.currentState!.validate()) {
-      _formKey.currentState!.save();
+      setState(() {
+        _isSaving = true;
+      });
       try {
         final existingBudget = budgets.firstWhere(
           (budget) => budget.category == _selectedCategory,
@@ -43,7 +48,7 @@ class _BudgetSettingsPageState extends State<BudgetSettingsPage>
         final budget = Budget(
           id: existingBudget.id.isEmpty ? '' : existingBudget.id,
           category: _selectedCategory!,
-          limit: double.parse(_budgetLimit.trim()),
+          limit: double.parse(_budgetLimitController.text.trim()),
         );
         if (existingBudget.id.isEmpty) {
           await _firestoreService.addBudget(budget);
@@ -57,12 +62,17 @@ class _BudgetSettingsPageState extends State<BudgetSettingsPage>
             behavior: SnackBarBehavior.floating,
           ),
         );
+        // Clear the form without resetting the entire UI
         _formKey.currentState!.reset();
+        _budgetLimitController.clear();
         setState(() {
           _selectedCategory = null;
-          _budgetLimit = '';
+          _isSaving = false;
         });
       } catch (e) {
+        setState(() {
+          _isSaving = false;
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to save budget: $e'),
@@ -101,19 +111,17 @@ class _BudgetSettingsPageState extends State<BudgetSettingsPage>
     bool isActive = true,
   }) {
     return ShaderMask(
-      shaderCallback:
-          (bounds) => LinearGradient(
-            colors:
-                isActive
-                    ? [
-                      const Color.fromARGB(255, 32, 33, 33),
-                      const Color.fromARGB(255, 56, 57, 57),
-                    ]
-                    : [
-                      const Color.fromARGB(255, 128, 127, 127),
-                      const Color.fromARGB(255, 177, 176, 176),
-                    ],
-          ).createShader(bounds),
+      shaderCallback: (bounds) => LinearGradient(
+        colors: isActive
+            ? [
+                const Color.fromARGB(255, 32, 33, 33),
+                const Color.fromARGB(255, 56, 57, 57),
+              ]
+            : [
+                const Color.fromARGB(255, 128, 127, 127),
+                const Color.fromARGB(255, 177, 176, 176),
+              ],
+      ).createShader(bounds),
       child: Text(
         text,
         style: TextStyle(
@@ -151,10 +159,9 @@ class _BudgetSettingsPageState extends State<BudgetSettingsPage>
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors:
-                isDark
-                    ? [const Color(0xFF1E1E1E), const Color(0xFF2C2C2C)]
-                    : [Colors.white, const Color(0xFFE3F2FD)],
+            colors: isDark
+                ? [const Color(0xFF1E1E1E), const Color(0xFF2C2C2C)]
+                : [Colors.white, const Color(0xFFE3F2FD)],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -257,35 +264,32 @@ class _BudgetSettingsPageState extends State<BudgetSettingsPage>
                   children: [
                     DropdownButtonFormField<String>(
                       value: _selectedCategory,
-                      items:
-                          categorySnapshot.data!
-                              .map(
-                                (category) => DropdownMenuItem(
-                                  value: category,
-                                  child: Text(
-                                    category,
-                                    style: const TextStyle(
-                                      fontFamily: 'Roboto',
-                                      fontSize: 16,
-                                    ),
-                                  ),
+                      items: categorySnapshot.data!
+                          .map(
+                            (category) => DropdownMenuItem(
+                              value: category,
+                              child: Text(
+                                category,
+                                style: const TextStyle(
+                                  fontFamily: 'Roboto',
+                                  fontSize: 16,
                                 ),
-                              )
-                              .toList(),
+                              ),
+                            ),
+                          )
+                          .toList(),
                       onChanged: (value) {
-                        setState(() {
-                          _selectedCategory = value;
-                          final existingBudget = budgets.firstWhere(
-                            (budget) => budget.category == value,
-                            orElse:
-                                () =>
-                                    Budget(id: '', category: value!, limit: 0),
-                          );
-                          _budgetLimit =
-                              existingBudget.limit == 0
-                                  ? ''
-                                  : existingBudget.limit.toString();
-                        });
+                        _selectedCategory = value;
+                        final existingBudget = budgets.firstWhere(
+                          (budget) => budget.category == value,
+                          orElse: () =>
+                              Budget(id: '', category: value!, limit: 0),
+                        );
+                        _budgetLimitController.text =
+                            existingBudget.limit == 0
+                                ? ''
+                                : existingBudget.limit.toString();
+                        // Avoid setState to prevent full rebuild
                       },
                       decoration: InputDecoration(
                         labelText: 'Category',
@@ -304,12 +308,12 @@ class _BudgetSettingsPageState extends State<BudgetSettingsPage>
                           vertical: 12,
                         ),
                       ),
-                      validator:
-                          (value) =>
-                              value == null ? 'Please select a category' : null,
+                      validator: (value) =>
+                          value == null ? 'Please select a category' : null,
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
+                      controller: _budgetLimitController,
                       decoration: InputDecoration(
                         labelText: 'Budget Limit',
                         labelStyle: TextStyle(
@@ -339,8 +343,6 @@ class _BudgetSettingsPageState extends State<BudgetSettingsPage>
                         }
                         return null;
                       },
-                      onSaved: (value) => _budgetLimit = value!,
-                      initialValue: _budgetLimit,
                       style: const TextStyle(
                         fontFamily: 'Roboto',
                         fontSize: 16,
@@ -348,7 +350,9 @@ class _BudgetSettingsPageState extends State<BudgetSettingsPage>
                     ),
                     const SizedBox(height: 20),
                     ElevatedButton(
-                      onPressed: () => _addOrUpdateBudget(budgets),
+                      onPressed: _isSaving
+                          ? null
+                          : () => _addOrUpdateBudget(budgets),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color.fromARGB(255, 1, 19, 21),
                         foregroundColor: Colors.white,
@@ -360,14 +364,23 @@ class _BudgetSettingsPageState extends State<BudgetSettingsPage>
                           vertical: 12,
                         ),
                       ),
-                      child: const Text(
-                        'Save Budget',
-                        style: TextStyle(
-                          fontFamily: 'Roboto',
-                          fontWeight: FontWeight.w600,
-                          fontSize: 16,
-                        ),
-                      ),
+                      child: _isSaving
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Text(
+                              'Save Budget',
+                              style: TextStyle(
+                                fontFamily: 'Roboto',
+                                fontWeight: FontWeight.w600,
+                                fontSize: 16,
+                              ),
+                            ),
                     ),
                   ],
                 ),
