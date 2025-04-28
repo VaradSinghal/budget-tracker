@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/transaction.dart' as app;
@@ -10,11 +9,9 @@ class FirestoreService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   static String? _cachedUserId;
-  static CollectionReference<Map<String, dynamic>>?
-  _cachedTransactionsCollection;
+  static CollectionReference<Map<String, dynamic>>? _cachedTransactionsCollection;
   static CollectionReference<Map<String, dynamic>>? _cachedCategoriesCollection;
   static CollectionReference<Map<String, dynamic>>? _cachedBudgetsCollection;
-
 
   String get _userId {
     if (_cachedUserId != null) return _cachedUserId!;
@@ -45,7 +42,6 @@ class FirestoreService {
         .collection('budgets');
   }
 
-
   final WriteBatch _batch = _firestore.batch();
 
   Future<void> addTransaction(app.Transaction transaction) async {
@@ -63,7 +59,6 @@ class FirestoreService {
         .orderBy('date', descending: true)
         .limit(limit);
 
-  
     if (startDate != null && endDate != null) {
       query = query
           .where('date', isGreaterThanOrEqualTo: _startOfDay(startDate))
@@ -124,7 +119,6 @@ class FirestoreService {
           double totalExpenses = 0;
           final categoryBreakdown = <String, double>{};
 
-    
           const chunkSize = 50;
           final totalDocs = snapshot.docs.length;
           int processed = 0;
@@ -153,7 +147,6 @@ class FirestoreService {
             processed = endIndex;
 
             if (processed < totalDocs) {
-         
               Future.microtask(() => processChunk(processed));
             } else {
               completer.complete({
@@ -164,7 +157,6 @@ class FirestoreService {
             }
           }
 
-      
           processChunk(0);
 
           return completer.future;
@@ -183,11 +175,10 @@ class FirestoreService {
     }
 
     return _getCategoriesCollection().snapshots().asyncMap((snapshot) {
-      final customCategories =
-          snapshot.docs
-              .map((doc) => doc.data()['name'] as String)
-              .where((name) => name.isNotEmpty)
-              .toList();
+      final customCategories = snapshot.docs
+          .map((doc) => doc.data()['name'] as String)
+          .where((name) => name.isNotEmpty)
+          .toList();
 
       const defaultCategories = [
         'Groceries',
@@ -218,10 +209,9 @@ class FirestoreService {
   }
 
   Future<void> deleteCategory(String category) async {
-    final query =
-        await _getCategoriesCollection()
-            .where('name', isEqualTo: category)
-            .get();
+    final query = await _getCategoriesCollection()
+        .where('name', isEqualTo: category)
+        .get();
 
     final batch = _firestore.batch();
     for (final doc in query.docs) {
@@ -233,17 +223,22 @@ class FirestoreService {
 
   // Optimized budget operations
   Future<void> addBudget(Budget budget) async {
-    await _getBudgetsCollection().add(budget.toMap());
+    final budgetMap = budget.toMap();
+    budgetMap['createdAt'] = FieldValue.serverTimestamp(); // Add timestamp
+    await _getBudgetsCollection().add(budgetMap);
+    _cachedBudgetsCollection = null; // Invalidate cache
   }
 
   Future<void> updateBudget(Budget budget) async {
     if (budget.id.isEmpty) return;
     await _getBudgetsCollection().doc(budget.id).update(budget.toMap());
+    _cachedBudgetsCollection = null; // Invalidate cache
   }
 
   Future<void> deleteBudget(String budgetId) async {
     if (budgetId.isEmpty) return;
     await _getBudgetsCollection().doc(budgetId).delete();
+    _cachedBudgetsCollection = null; // Invalidate cache
   }
 
   Stream<List<Budget>> getBudgets() {
@@ -251,20 +246,24 @@ class FirestoreService {
         .orderBy('createdAt', descending: true)
         .snapshots()
         .asyncMap((snapshot) async {
-          return await Future.wait(
+          final budgets = await Future.wait(
             snapshot.docs.map((doc) async {
               try {
                 return Budget.fromMap(doc.data(), doc.id);
               } catch (e) {
-                print('Error parsing budget ${doc.id}: $e');
+                print('Error parsing budget ${doc.id}: $e, data: ${doc.data()}');
                 return null;
               }
             }),
           ).then((budgets) => budgets.whereType<Budget>().toList());
+          print('Budgets fetched: $budgets'); // Debug log
+          return budgets;
+        }).handleError((error) {
+          print('Error in getBudgets stream: $error');
+          return <Budget>[];
         });
   }
 
-  // Optimized monthly trends calculation
   Stream<Map<String, Map<String, double>>> getMonthlyTrends(int months) {
     final startDate = DateTime(
       DateTime.now().year,
@@ -279,7 +278,7 @@ class FirestoreService {
           final completer = Completer<Map<String, Map<String, double>>>();
           final trends = <String, Map<String, double>>{};
 
-          final chunkSize = 50;
+          const chunkSize = 50;
           final totalDocs = snapshot.docs.length;
           int processed = 0;
 
